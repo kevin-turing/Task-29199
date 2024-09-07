@@ -1,1 +1,109 @@
-T1MA
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Snake and Ladder Game</title>
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    #gameCanvas {
+        border: 1px solid #000;
+        background: url('background.jpg') no-repeat center center; 
+        background-size: cover;
+    }
+    .menu-item {
+        cursor: pointer;
+        margin: 10px;
+        padding: 10px;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .power-up {
+        background: yellow;
+        border-radius: 50%;
+    }
+</style>
+</head>
+<body>
+
+<div id="mainMenu" class="container text-center">
+    <h1>Snake and Ladder</h1>
+    <div class="menu-item" onclick="startGame()">Play</div>
+    <div class="menu-item" onclick="customBoard()">Custom Board</div>
+    <div class="menu-item" onclick="openSettings()">Settings</div>
+</div>
+
+<canvas id="gameCanvas" width="800" height="600" style="display:none;"></canvas>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let gameActive = false, currentPlayer = 0, players = [], board = [];
+
+    function startGame() {
+        document.getElementById('mainMenu').style.display = 'none';
+        canvas.style.display = 'block';
+        initializeGame();
+    }
+
+    function initializeGame() {
+        // Setup board, players, game logic here
+        board = generateBoard();
+        players = [{x: 0, y: 0, id: 1}, {x: 0, y: 1, id: 2}];
+        gameActive = true;
+        animate();
+    }
+
+    function generateBoard() {
+        // Procedural generation of board with obstacles, snakes, ladders
+        let b = Array(100).fill().map((_, i) => ({id: i+1, special: Math.random() < 0.1 ? 'power-up' : 'normal'}));
+        // Add snakes and ladders
+        return b;
+    }
+
+    function rollDice() {
+        return Math.floor(Math.random() * 6) + 1; // Simple dice roll for now
+    }
+
+    function movePlayer(player, steps) {
+        let newPos = player.x * 10 + player.y + steps;
+        if (newPos >= 100) return; // Win condition
+        player.x = Math.floor(newPos / 10);
+        player.y = newPos % 10;
+        // Handle special tiles, snakes, ladders
+    }
+
+    function animate() {
+        if (!gameActive) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBoard();
+        drawPlayers();
+        
+        // Camera follows current player
+        gsap.to(canvas, { 
+            x: -players[currentPlayer].x * 80 + 400, 
+            y: -players[currentPlayer].y * 60 + 300, 
+            duration: 1
+        });
+
+        requestAnimationFrame(animate);
+    }
+
+    function drawBoard() {
+        // Draw grid, snakes, ladders, power-ups
+    }
+
+    function drawPlayers() {
+        players.forEach(p => {
+            ctx.fillStyle = p.id === 1 ? 'red' : 'blue';
+            ctx.fillRect(p.y * 60, p.x * 60, 50, 50);
+        });
+    }
+
+    // Event listeners for controls would be added here
+    // Pause functionality, settings, custom board logic would be implemented
+
+</script>
+</body>
+</html>

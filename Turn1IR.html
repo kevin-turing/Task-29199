@@ -1,1 +1,473 @@
-T1IR
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake and Ladder Adventure</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        :root {
+            --board-size: 600px;
+            --cell-size: 60px;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game-container {
+            max-width: 800px;
+            width: 95%;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+
+        #board-container {
+            width: var(--board-size);
+            height: var(--board-size);
+            overflow: hidden;
+            position: relative;
+            margin: 0 auto;
+        }
+
+        #board {
+            width: var(--board-size);
+            height: var(--board-size);
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="50" height="50" fill="%23f0f0f0"/><rect x="50" y="50" width="50" height="50" fill="%23f0f0f0"/></svg>');
+            background-size: var(--cell-size) var(--cell-size);
+            position: absolute;
+            transition: transform 0.5s ease-out;
+        }
+
+        .cell {
+            position: absolute;
+            width: var(--cell-size);
+            height: var(--cell-size);
+            border: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #555;
+            transition: background-color 0.3s;
+        }
+
+        .cell:hover {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .player {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            position: absolute;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .snake, .ladder, .power-up {
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .power-up {
+            width: 30px;
+            height: 30px;
+            background-size: contain;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        #controls {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background-color: #4CAF50;
+            color: white;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #dice {
+            width: 60px;
+            height: 60px;
+            background-color: white;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        #player-turn {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        #menu {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        #game-message {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: 600;
+            min-height: 24px;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="menu">
+            <button onclick="game.start()">Play</button>
+            <button onclick="game.showCustomBoard()">Custom Board</button>
+            <button onclick="game.showSettings()">Settings</button>
+        </div>
+        <div id="player-turn"></div>
+        <div id="board-container">
+            <div id="board"></div>
+        </div>
+        <div id="game-message"></div>
+        <div id="controls">
+            <button onclick="game.rollDice()">Roll Dice</button>
+            <div id="dice"></div>
+            <button onclick="game.togglePause()">Pause</button>
+        </div>
+    </div>
+
+    <script>
+        const game = {
+            boardSize: 10,
+            cellSize: 60,
+            players: [
+                { id: 1, position: 0, color: '#FF6B6B' },
+                { id: 2, position: 0, color: '#4ECDC4' }
+            ],
+            currentPlayer: 0,
+            isActive: false,
+            board: [],
+
+            start() {
+                document.getElementById('menu').style.display = 'none';
+                this.generateBoard();
+                this.placePlayers();
+                this.isActive = true;
+                this.updatePlayerTurn();
+            },
+
+            generateBoard() {
+                const boardElement = document.getElementById('board');
+                boardElement.innerHTML = '';
+                this.board = [];
+
+                for (let i = 0; i < this.boardSize * this.boardSize; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.style.left = (i % this.boardSize) * this.cellSize + 'px';
+                    cell.style.top = (this.boardSize - 1 - Math.floor(i / this.boardSize)) * this.cellSize + 'px';
+                    cell.textContent = i + 1;
+                    boardElement.appendChild(cell);
+                    this.board.push({ type: 'normal' });
+                }
+
+                this.addSnakesAndLadders();
+                this.addPowerUps();
+            },
+
+            addSnakesAndLadders() {
+                const snakes = 3;
+                const ladders = 3;
+
+                for (let i = 0; i < snakes; i++) {
+                    this.addSpecialTile('snake');
+                }
+
+                for (let i = 0; i < ladders; i++) {
+                    this.addSpecialTile('ladder');
+                }
+            },
+
+            addSpecialTile(type) {
+                let start, end;
+                if (type === 'snake') {
+                    start = Math.floor(Math.random() * (this.board.length - 1)) + 1;
+                    end = Math.floor(Math.random() * start);
+                } else {
+                    start = Math.floor(Math.random() * (this.board.length - 1));
+                    end = Math.floor(Math.random() * (this.board.length - start - 1)) + start + 1;
+                }
+                this.board[start].type = type;
+                this.board[start].end = end;
+                this.addVisualElement(type, start, end);
+            },
+
+            addPowerUps() {
+                const powerUps = 5;
+                for (let i = 0; i < powerUps; i++) {
+                    const position = Math.floor(Math.random() * this.board.length);
+                    if (this.board[position].type === 'normal') {
+                        this.board[position].type = 'power-up';
+                        this.addVisualElement('power-up', position);
+                    }
+                }
+            },
+
+            addVisualElement(type, start, end) {
+                const element = document.createElement('div');
+                element.className = type;
+                const startCell = document.getElementsByClassName('cell')[start];
+                element.style.left = startCell.style.left;
+                element.style.top = startCell.style.top;
+                
+                if (type === 'snake' || type === 'ladder') {
+                    const endCell = document.getElementsByClassName('cell')[end];
+                    const startX = parseInt(startCell.style.left);
+                    const startY = parseInt(startCell.style.top);
+                    const endX = parseInt(endCell.style.left);
+                    const endY = parseInt(endCell.style.top);
+                    const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+                    const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
+
+                    let svg;
+                    if (type === 'snake') {
+                        svg = `<svg width="${length}" height="30" viewBox="0 0 ${length} 30">
+                            <path d="M0,15 Q${length/4},0 ${length/2},15 T${length},15" stroke="#4a9c41" stroke-width="10" fill="none"/>
+                            <circle cx="0" cy="15" r="5" fill="#4a9c41"/>
+                            <circle cx="${length}" cy="15" r="5" fill="#ff0000"/>
+                        </svg>`;
+                    } else {
+                        const steps = 5;
+                        const stepWidth = length / steps;
+                        svg = `<svg width="${length}" height="30" viewBox="0 0 ${length} 30">
+                            <line x1="0" y1="15" x2="${length}" y2="15" stroke="#8B4513" stroke-width="5"/>
+                            ${Array.from({length: steps + 1}, (_, i) => 
+                                `<line x1="${i * stepWidth}" y1="0" x2="${i * stepWidth}" y2="30" stroke="#8B4513" stroke-width="3"/>`
+                            ).join('')}
+                        </svg>`;
+                    }
+
+                    element.style.width = `${length}px`;
+                    element.style.height = '30px';
+                    element.style.transform = `rotate(${angle}deg)`;
+                    element.style.transformOrigin = 'top left';
+                    element.innerHTML = svg;
+                } else if (type === 'power-up') {
+                    element.innerHTML = `<svg width="30" height="30" viewBox="0 0 100 100">
+                        <polygon points="50,10 61,35 90,35 65,55 75,80 50,65 25,80 35,55 10,35 39,35" fill="gold"/>
+                    </svg>`;
+                }
+
+                document.getElementById('board').appendChild(element);
+            },
+
+            placePlayers() {
+                this.players.forEach(player => {
+                    const playerElement = document.createElement('div');
+                    playerElement.className = 'player';
+                    playerElement.id = `player${player.id}`;
+                    playerElement.style.backgroundColor = player.color;
+                    document.getElementById('board').appendChild(playerElement);
+                    this.updatePlayerPosition(player);
+                });
+            },
+
+            rollDice() {
+                if (!this.isActive) return;
+                const roll = Math.floor(Math.random() * 6) + 1;
+                const diceElement = document.getElementById('dice');
+                diceElement.textContent = roll;
+                diceElement.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    diceElement.style.animation = '';
+                    this.movePlayer(this.players[this.currentPlayer], roll);
+                }, 500);
+            },
+
+            movePlayer(player, spaces) {
+                const steps = Array.from({length: spaces}, (_, i) => player.position + i + 1);
+                const moveStep = (index) => {
+                    if (index >= steps.length) {
+                        this.checkWinCondition(player);
+                        this.checkSpecialTile(player);
+                        this.currentPlayer = (this.currentPlayer + 1) % this.players.length;
+                        this.updatePlayerTurn();
+                        return;
+                    }
+                    player.position = steps[index];
+                    this.updatePlayerPosition(player);
+                    setTimeout(() => moveStep(index + 1), 200);
+                };
+                moveStep(0);
+            },
+
+            checkWinCondition(player) {
+                if (player.position >= this.board.length - 1) {
+                    player.position = this.board.length - 1;
+                    this.isActive = false;
+                    this.showMessage(`Player ${player.id} wins!`);
+                }
+            },
+
+            updatePlayerPosition(player) {
+                const playerElement = document.getElementById(`player${player.id}`);
+                const cell = document.getElementsByClassName('cell')[player.position];
+                playerElement.style.left = cell.style.left;
+                playerElement.style.top = cell.style.top;
+                this.focusCamera(player);
+            },
+            checkSpecialTile(player) {
+                const tile = this.board[player.position];
+                if (tile.type === 'snake' || tile.type === 'ladder') {
+                    setTimeout(() => {
+                        this.showMessage(`Player ${player.id} ${tile.type === 'snake' ? 'slides down' : 'climbs up'}!`);
+                        player.position = tile.end;
+                        this.updatePlayerPosition(player);
+                    }, 500);
+                } else if (tile.type === 'power-up') {
+                    this.activatePowerUp(player);
+                }
+            },
+
+            activatePowerUp(player) {
+                const powerUps = ['teleport', 'reverse', 'extraTurn'];
+                const powerUp = powerUps[Math.floor(Math.random() * powerUps.length)];
+                
+                switch (powerUp) {
+                    case 'teleport':
+                        player.position = Math.floor(Math.random() * this.board.length);
+                        this.showMessage(`Player ${player.id} teleports!`);
+                        break;
+                    case 'reverse':
+                        this.players.forEach(p => {
+                            if (p.id !== player.id) {
+                                p.position = Math.max(0, p.position - 5);
+                                this.updatePlayerPosition(p);
+                            }
+                        });
+                        this.showMessage(`Player ${player.id} reverses others!`);
+                        break;
+                    case 'extraTurn':
+                        this.currentPlayer = this.players.indexOf(player);
+                        this.showMessage(`Player ${player.id} gets an extra turn!`);
+                        break;
+                }
+                this.updatePlayerPosition(player);
+            },
+
+            focusCamera(player) {
+                const board = document.getElementById('board');
+                const cell = document.getElementsByClassName('cell')[player.position];
+                const boardContainer = document.getElementById('board-container');
+                const x = cell.offsetLeft + this.cellSize / 2 - boardContainer.clientWidth / 2;
+                const y = cell.offsetTop + this.cellSize / 2 - boardContainer.clientHeight / 2;
+                board.style.transform = `translate(${-x}px, ${-y}px)`;
+            },
+
+            togglePause() {
+                this.isActive = !this.isActive;
+                document.querySelector('#controls button:last-child').textContent = this.isActive ? 'Pause' : 'Resume';
+                this.showMessage(this.isActive ? 'Game resumed' : 'Game paused');
+            },
+
+            showCustomBoard() {
+                alert('Custom board feature coming soon!');
+            },
+
+            showSettings() {
+                alert('Settings feature coming soon!');
+            },
+
+            updatePlayerTurn() {
+                const playerTurnElement = document.getElementById('player-turn');
+                playerTurnElement.textContent = `Player ${this.players[this.currentPlayer].id}'s turn`;
+                playerTurnElement.style.color = this.players[this.currentPlayer].color;
+            },
+
+            showMessage(message) {
+                const messageElement = document.getElementById('game-message');
+                messageElement.textContent = message;
+                messageElement.style.opacity = '1';
+                setTimeout(() => {
+                    messageElement.style.opacity = '0';
+                }, 2000);
+            }
+        };
+
+        // Add event listeners for keyboard and touch controls
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'Enter') game.rollDice();
+        });
+
+        document.getElementById('board-container').addEventListener('touchstart', (e) => {
+            if (game.isActive) {
+                e.preventDefault();
+                game.rollDice();
+            }
+        });
+
+        // Initialize the game
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('dice').textContent = '?';
+        });
+    </script>
+</body>
+</html>

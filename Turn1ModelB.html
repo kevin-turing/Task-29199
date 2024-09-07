@@ -1,1 +1,123 @@
-T1MB
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake and Ladder</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<style>
+    body { font-family: 'Arial', sans-serif; background: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .game-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    #board { width: 500px; height: 500px; background: #e9e9e9; position: relative; margin: 20px auto; }
+    .cell { width: 50px; height: 50px; border: 1px solid #ccc; position: absolute; display: flex; align-items: center; justify-content: center; }
+    .player { width: 30px; height: 30px; border-radius: 50%; position: absolute; transition: all 0.5s; }
+    #dice { font-size: 24px; cursor: pointer; }
+    .menu, .settings, .custom-board { display: none; }
+    .animate__animated { --animate-duration: 1s; }
+</style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="menu">
+        <button onclick="startGame()">Play</button>
+        <button onclick="showCustomBoard()">Custom Board</button>
+        <button onclick="showSettings()">Settings</button>
+    </div>
+    
+    <div id="board"></div>
+    
+    <div id="dice" onclick="rollDice()">Roll Dice</div>
+    
+    <div class="settings">
+        <!-- Settings content -->
+    </div>
+    
+    <div class="custom-board">
+        <!-- Custom board setup -->
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+let currentPlayer = 0, players = [{color: 'red'}, {color: 'blue'}];
+let boardSize = 100, currentPositions = [0, 0];
+
+function startGame() {
+    $('.menu').hide();
+    generateBoard();
+    // Setup initial positions, etc.
+}
+
+function generateBoard() {
+    let html = '';
+    for(let i = 0; i < boardSize; i++) {
+        html += `<div class="cell" style="left: ${(i % 10) * 50}px; top: ${Math.floor(i / 10) * 50}px;">${i + 1}</div>`;
+    }
+    $('#board').html(html);
+    placeSnakesAndLadders();
+    placePlayers();
+}
+
+function placeSnakesAndLadders() {
+    // Place snakes and ladders procedurally
+    // Example: 
+    // $('<div class="snake">').appendTo('.cell:nth-child(17)');
+}
+
+function placePlayers() {
+    players.forEach((p, i) => {
+        let playerDiv = $(`<div class="player" style="background-color: ${p.color}; top: 0; left: 0;"></div>`);
+        $('#board').append(playerDiv);
+    });
+}
+
+function rollDice() {
+    let roll = Math.floor(Math.random() * 6) + 1;
+    movePlayer(currentPlayer, roll);
+    // Check for special dice effects here
+}
+
+function movePlayer(playerIndex, steps) {
+    currentPositions[playerIndex] += steps;
+    if (currentPositions[playerIndex] >= boardSize) {
+        alert(`Player ${playerIndex + 1} wins!`);
+        return;
+    }
+    let playerElement = $('.player').eq(playerIndex);
+    let newPosition = $('.cell').eq(currentPositions[playerIndex] - 1);
+    playerElement.css({
+        'top': newPosition.css('top'),
+        'left': newPosition.css('left')
+    });
+    
+    // Check for snake, ladder, or power-up
+    checkForSpecialTile(playerIndex);
+    currentPlayer = 1 - currentPlayer; // Switch player
+}
+
+function checkForSpecialTile(playerIndex) {
+    // Implement logic for snakes, ladders, and power-ups
+    // Example: teleport, reverse, etc.
+}
+
+function showCustomBoard() {
+    $('.menu').hide();
+    $('.custom-board').show();
+    // Custom board logic
+}
+
+function showSettings() {
+    $('.menu').hide();
+    $('.settings').show();
+    // Settings logic
+}
+
+// Initialization
+$(document).ready(function() {
+    $('.menu').show();
+});
+</script>
+
+</body>
+</html>
