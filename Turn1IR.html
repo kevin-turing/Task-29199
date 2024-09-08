@@ -343,37 +343,54 @@
             },
 
             movePlayer(player, spaces) {
-                const steps = Array.from({length: spaces}, (_, i) => player.position + i + 1);
-                const moveStep = (index) => {
-                    if (index >= steps.length) {
-                        this.checkWinCondition(player);
-                        this.checkSpecialTile(player);
-                        this.currentPlayer = (this.currentPlayer + 1) % this.players.length;
-                        this.updatePlayerTurn();
-                        return;
-                    }
-                    player.position = steps[index];
-                    this.updatePlayerPosition(player);
-                    setTimeout(() => moveStep(index + 1), 200);
-                };
-                moveStep(0);
-            },
+        const newPosition = player.position + spaces;
+        const steps = Array.from({length: spaces}, (_, i) => player.position + i + 1);
+        const moveStep = (index) => {
+            if (index >= steps.length || steps[index] >= this.board.length) {
+                this.checkWinCondition(player);
+                this.checkSpecialTile(player);
+                this.currentPlayer = (this.currentPlayer + 1) % this.players.length;
+                this.updatePlayerTurn();
+                return;
+            }
+            player.position = steps[index];
+            this.updatePlayerPosition(player);
+            setTimeout(() => moveStep(index + 1), 200);
+        };
+        moveStep(0);
+    },
 
-            checkWinCondition(player) {
-                if (player.position >= this.board.length - 1) {
-                    player.position = this.board.length - 1;
-                    this.isActive = false;
-                    this.showMessage(`Player ${player.id} wins!`);
-                }
-            },
+    checkWinCondition(player) {
+        if (player.position >= this.board.length - 1) {
+            player.position = this.board.length - 1;
+            this.updatePlayerPosition(player);
+            this.isActive = false;
+            this.showMessage(`Player ${player.id} wins!`);
+        }
+    },
 
             updatePlayerPosition(player) {
-                const playerElement = document.getElementById(`player${player.id}`);
-                const cell = document.getElementsByClassName('cell')[player.position];
-                playerElement.style.left = cell.style.left;
-                playerElement.style.top = cell.style.top;
-                this.focusCamera(player);
-            },
+        const playerElement = document.getElementById(`player${player.id}`);
+        if (!playerElement) {
+            console.error(`Player element not found for player ${player.id}`);
+            return;
+        }
+
+        if (player.position < 0 || player.position >= this.board.length) {
+            console.error(`Invalid player position: ${player.position}`);
+            return;
+        }
+
+        const cell = document.getElementsByClassName('cell')[player.position];
+        if (!cell) {
+            console.error(`Cell not found at position ${player.position}`);
+            return;
+        }
+
+        playerElement.style.left = cell.style.left;
+        playerElement.style.top = cell.style.top;
+        this.focusCamera(player);
+    },
             checkSpecialTile(player) {
                 const tile = this.board[player.position];
                 if (tile.type === 'snake' || tile.type === 'ladder') {
